@@ -2,6 +2,8 @@ const $=id=>document.getElementById(id);
 const suits=['♠','♥','♦','♣'], names=['spades','hearts','diamonds','clubs'];
 let state, stream, busy=false, connected=false, toastTimer, lastSessionCheck=0;
 const activeFlights=new Set();
+const touchHand=matchMedia('(max-width:760px), (pointer:coarse)');
+let selectedCard=null,handPage=0;
 let token=sessionStorage.getItem('durak-token');
 const nick=sessionStorage.getItem('durak-name');if(nick)$('name').value=nick;
 const invite=new URLSearchParams(location.search).get('code');if(invite)$('code').value=invite.slice(0,6);
@@ -10,7 +12,7 @@ async function api(action,data={}) {
   const response=await fetch('/api/'+action,{method:'POST',headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:JSON.stringify(data)});
   const result=await response.json();if(!response.ok){if(response.status===401)clearSession();throw Error(result.error||'Could not complete that move.');}return result;
 }
-function clearSession(){stream?.close();stream=null;token=null;state=null;connected=false;sessionStorage.removeItem('durak-token');$('game').hidden=true;$('welcome').hidden=false;$('connection').textContent='A table for friends';}
+function clearSession(){selectedCard=null;handPage=0;stream?.close();stream=null;token=null;state=null;connected=false;sessionStorage.removeItem('durak-token');$('game').hidden=true;$('welcome').hidden=false;$('connection').textContent='A table for friends';}
 function connect(){
   stream?.close();stream=new EventSource('/events?token='+encodeURIComponent(token));
   stream.onopen=()=>{connected=true;$('connection').textContent='Connected to the table';if(state)render();};
@@ -41,6 +43,8 @@ $('lobby-form').onsubmit=async e=>{
 };
 function render(){
   if(!state)return;const s=state,me=s.players.find(p=>p.id===s.you),myTurn=s.actor===s.you,actor=s.players.find(p=>p.id===s.actor);
+  if(!s.legal.includes(selectedCard))selectedCard=null;
+  $('hand-pager').replaceChildren();$('hand-pager').hidden=true;
   $('welcome').hidden=true;$('game').hidden=false;$('copy-code').textContent=s.code+' ⧉';$('round-label').textContent=s.status==='waiting'?'2–4 players':`Round ${s.round} · Trump ${suits[Number(s.trump)]}`;
   $('leave').hidden=false;$('leave').disabled=busy;
   renderRoles(s,me);
@@ -86,7 +90,29 @@ function render(){
       if(!s.table.length)$('waiting').append(elem('p','',`${s.players.find(p=>p.id===s.defender)?.name} defends this round`));
     }
     const hand=[...s.hand].sort((a,b)=>(a[0]===s.trump?10:Number(a[0]))-(b[0]===s.trump?10:Number(b[0]))||Number(a.slice(1))-Number(b.slice(1)));
-    for(const c of hand){const el=cardNode(c,true);const legal=s.legal.includes(c)&&!busy&&connected;el.disabled=!legal;if(legal)el.classList.add('playable');el.onclick=()=>move('play',c);$('hand').append(el);}
+    const pageSize=4,totalPages=Math.max(1,Math.ceil(hand.length/pageSize));
+    handPage=Math.min(handPage,totalPages-1);
+    const shown=touchHand.matches?hand.slice(handPage*pageSize,(handPage+1)*pageSize):hand;
+    $('hand').classList.toggle('touch-hand',touchHand.matches);
+    for(const [index,c] of shown.entries()){
+      const el=cardNode(c,true),legal=s.legal.includes(c)&&!busy&&connected;
+      el.disabled=!legal;if(legal)el.classList.add('playable');
+      el.classList.toggle('selected',c===selectedCard);el.setAttribute('aria-pressed',String(c===selectedCard));
+      const fan=shown.length===1?0:(index/(shown.length-1)-.5);
+      el.style.setProperty('--fan-angle',(fan*12)+'deg');el.style.setProperty('--fan-drop',(Math.abs(fan)*12)+'px');
+      el.onclick=()=>{if(touchHand.matches){selectedCard=selectedCard===c?null:c;render();}else move('play',c);};$('hand').append(el);
+    }
+    if(touchHand.matches&&hand.length){
+      const pager=$('hand-pager');pager.hidden=false;
+      const back=elem('button','quiet','‹');back.setAttribute('aria-label','Previous cards');back.disabled=handPage===0;back.onclick=()=>{handPage--;selectedCard=null;render();};
+      const forward=elem('button','quiet','›');forward.setAttribute('aria-label','Next cards');forward.disabled=handPage===totalPages-1;forward.onclick=()=>{handPage++;selectedCard=null;render();};
+      pager.append(back,elem('span','',`${handPage*pageSize+1}–${Math.min((handPage+1)*pageSize,hand.length)} / ${hand.length}${myTurn&&s.legal.length?' · '+s.legal.length+' playable':''}`),forward);
+      if(myTurn&&s.legal.length){
+        const play=actionButton(selectedCard?'Play '+cardLabel(selectedCard):'Select a card','play');
+        play.disabled=busy||!connected||!selectedCard;play.onclick=()=>{const c=selectedCard;selectedCard=null;move('play',c);};$('actions').prepend(play);
+      }
+    }
+
   }
   $('your-role').textContent=s.status==='playing'?playerRole(me,s):'YOUR HAND';
   const dock=document.querySelector('.action-dock');
@@ -174,8 +200,9 @@ function animateMove(m){
 function fitHand(){
   const hand=$('hand'),cards=hand.querySelectorAll('.card');
   if(!matchMedia('(min-width:761px)').matches||cards.length<2){hand.style.removeProperty('--hand-overlap');return;}
-  const available=hand.clientWidth-24, width=cards[0].getBoundingClientRect().width;
-  const overlap=Math.min(0,(available-width*cards.length)/(cards.length-1));
+  if(touchHand.matches){hand.style.removeProperty('--hand-overlap');return;}
+  const available=hand.clientWidth-64, width=cards[0].offsetWidth;
+  const overlap=Math.min(-width*.48,(available-width*cards.length)/(cards.length-1));
   hand.style.setProperty('--hand-overlap',overlap+'px');
 }
 new ResizeObserver(fitHand).observe($('hand'));
@@ -195,3 +222,6 @@ function impactEffect(move){
     spark.animate([{transform:'translate(0,0) scale(0)',opacity:0},{offset:.15,opacity:1},{transform:`translate(${dx}px,${dy}px) scale(.2)`,opacity:0}],{duration:600,delay,fill:'both'}).finished.then(()=>spark.remove());
   }
 }
+
+function cardLabel(c){return (({11:'J',12:'Q',13:'K',14:'A'})[Number(c.slice(1))]||c.slice(1))+suits[Number(c[0])];}
+touchHand.addEventListener('change',()=>{selectedCard=null;handPage=0;if(state)render();});

@@ -2,6 +2,16 @@
 
 A small, dependency-free multiplayer Durak game for 2–4 friends. A first-person table view puts your cards in the foreground and other players around the felt. Create a lobby, share its six-character code, and let the host deal.
 
+## Fanned hands and touch layout
+
+Desktop cards now overlap by roughly half their width (more for very large hands) with a slight fan angle. Hovering or keyboard-focusing a playable card lifts it above its neighbours.
+
+On phones and touch devices, the hand shows up to four fully visible cards per page. Previous/next buttons reach every card without scrolling. Tap a playable card to select it, then press Play to confirm. Changing pages clears selection, and server updates invalidate selections that are no longer legal. The pager shows the total number of playable cards when it is your turn, including cards on other pages.
+
+Phone layouts now use a fixed dynamic viewport height with compact opponent information, a responsive table and a reserved hand/action area. A short landscape layout is included. The landing screen also fits the phone layout; the rules dialog remains independently scrollable. Browser visual verification has not been performed.
+
+Update all three files in `public` together and refresh the browser. No server changes are needed for this update.
+
 ## Larger hand and trump card
 
 The action-message strip and turn-instruction panel below the table are removed from the visible layout. Their reserved space now enlarges the hand cards; desktop remains within the viewport. Roles above the table and the right-hand action dock still identify the current player and available actions. The face-up trump card is larger and tilted, with its deck count kept upright.

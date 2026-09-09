@@ -128,3 +128,56 @@
   .stock .card{width:52px;height:auto}.stock .card span{font-size:17px}.stock .card b{font-size:28px}
   .hand{min-height:167px}.hand .card{width:88px;height:126px}.hand .card span{font-size:21px}.hand .card b{font-size:40px}
 }
+/* A fanned desktop hand; touch hands use explicit selection and paging. */
+@media(min-width:761px) and (pointer:fine){
+  .hand{padding:25px 32px 12px}
+  .hand .card{transform:translateY(var(--fan-drop,0px)) rotate(var(--fan-angle,0deg));transition:transform .18s,box-shadow .18s;box-shadow:-4px 5px 12px #0005}
+  .hand .card:hover,.hand .card:focus-visible,.hand .card.playable:hover{transform:translateY(-13px) rotate(0deg) scale(1.04);z-index:5;box-shadow:0 10px 22px #0008}
+}
+.hand-pager{display:flex;align-items:center;justify-content:center;gap:12px;min-height:0;font-size:12px;color:var(--muted)}
+.hand-pager button{padding:0 14px;font-size:24px;line-height:24px;min-width:44px;height:28px}
+.hand.touch-hand{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;justify-items:center;align-items:center;padding:10px 8px 4px;overflow:hidden;min-width:0}
+.hand.touch-hand .card{width:auto;max-width:100%;height:auto;max-height:100%;aspect-ratio:5/7;margin:0;transform:none;justify-self:stretch;border-radius:6px}
+.hand.touch-hand .card.selected{transform:translateY(-4px);outline:3px solid var(--gold);outline-offset:1px;box-shadow:0 0 18px #e9bd7144;z-index:2}
+.hand.touch-hand .card.playable:hover{transform:none}.hand.touch-hand .card.selected:hover{transform:translateY(-4px)}
+.hand.touch-hand .card span{font-size:20px;left:5px;top:4px}.hand.touch-hand .card b{font-size:36px}
+@media(min-width:761px) and (pointer:coarse){.player-area{grid-template-rows:minmax(0,1fr) 28px 20px}.hand.touch-hand .card{max-width:100px;justify-self:center;width:100%}}
+@media(max-width:760px){
+  html{height:100%;overflow:hidden}
+  body{height:100dvh;min-height:0;overflow:hidden;display:grid;grid-template-rows:44px minmax(0,1fr);padding-top:env(safe-area-inset-top)}
+  header{height:auto;min-height:0;padding:0 12px}.brand{font-size:22px}.brand span{display:none}.header-right{gap:4px}.quiet{font-size:12px;padding:6px 9px}
+  main{min-height:0;min-width:0;overflow:hidden}.site-footer{display:none}
+  .game{--player-height:clamp(190px,34dvh,260px);display:grid;grid-template-rows:30px 40px minmax(0,1fr) var(--player-height);gap:4px;height:100%;width:100%;max-width:none;min-height:0;margin:0;padding:4px max(8px,env(safe-area-inset-right)) max(4px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left))}
+  .game:has(.role-strip[hidden]){grid-template-rows:30px 0 minmax(0,1fr) var(--player-height)}
+  .game-top{padding:0;gap:4px;min-width:0}.game-top .muted{font-size:11px;white-space:nowrap}.code-button{font-size:13px;padding:3px 7px;letter-spacing:1px}#leave{padding:4px 7px;font-size:11px}
+  .role-strip{margin:0;gap:4px;min-height:0}.role-tile{padding:2px 5px;min-width:0;overflow:hidden}.role-tile>span{font-size:9px;letter-spacing:.4px;line-height:14px}.role-tile strong{display:block;font-size:12px;line-height:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .arena{container-type:size;min-height:0;height:auto;padding:0;margin:0;grid-row:3}
+  .felt{inset:67px 0 4px;border-width:5px;border-radius:28% 28% 20% 20%;box-shadow:0 4px 12px #0005,inset 0 0 24px #082b28}
+  .seat{min-width:0;width:30%;display:grid;grid-template-columns:26px minmax(0,1fr);column-gap:4px;grid-template-rows:18px 19px 16px;text-align:left}
+  .seat.pos-0,.seat.pos-1,.seat.pos-2{top:5px}.seat.pos-0{left:50%}.seat.pos-1{left:16%}.seat.pos-2{left:84%}
+  .seat .avatar{grid-column:1;grid-row:1/4;width:26px;height:30px;font-size:19px;margin:5px 0;border-width:1px}
+  .seat-name{grid-column:2;grid-row:1;max-width:none;font-size:11px;line-height:18px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0}
+  .role-badge{grid-column:2;grid-row:2;font-size:8px;line-height:15px;max-width:100%;padding:0 2px;margin:1px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .seat-state{grid-column:2;grid-row:3;font-size:9px;line-height:16px;white-space:nowrap}.mini-hand{display:none}
+  .table-status{top:5px;left:12%;right:12%;font-size:9px;line-height:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .battle{width:68%;min-height:0;max-height:100%;padding:18px 0 0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px 9px;justify-items:center;align-content:center}
+  .pair{width:min(15cqw,18cqh,65px);height:auto;aspect-ratio:1/1.3;margin:0;min-width:0}.pair .card{width:76%;height:auto;aspect-ratio:5/7}.pair .card span{font-size:clamp(10px,4cqw,15px);left:2px;top:2px}.pair .card b{font-size:clamp(16px,6cqw,24px)}.pair .defense{top:20%;left:22%}.pair-label{font-size:7px;top:-12px}
+  .stock{left:3%;bottom:25%;gap:10px}.stock .card{width:clamp(27px,11cqw,44px);height:auto}.stock .card span{font-size:13px;left:3px;top:3px}.stock .card b{font-size:23px}.stock-label{font-size:9px}
+  .discard{right:2%;bottom:30%;font-size:8px;max-width:35px}.table-mark{font-size:25px;letter-spacing:4px}.table-mark span{font-size:7px}
+  .waiting{inset:22px 12% 8px;padding:4px}.waiting h2{font-size:22px;margin:0 0 8px}.waiting p{font-size:12px;margin:0}
+  .player-area{grid-row:4;display:grid;grid-template-rows:minmax(0,1fr) 28px 18px;min-height:0;min-width:0;margin:0}
+  .hand-zone{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) 42px;gap:3px;min-height:0}
+  .hand-zone .hand{min-height:0;height:100%}.hand.touch-hand .card{max-height:100%;width:auto;height:100%;max-width:100%;justify-self:center}.hand.touch-hand .card span{font-size:clamp(15px,2.6dvh,23px)}.hand.touch-hand .card b{font-size:clamp(25px,4.5dvh,38px)}
+  .action-dock{align-self:stretch;display:flex;align-items:center;padding:3px 7px;margin:0;gap:8px;border-radius:8px;min-height:0}.dock-label{margin:0;max-width:44px;line-height:12px;font-size:8px}.action-dock .actions{flex:1;flex-direction:row;gap:6px;align-items:center}.action-dock .actions button{flex:1;width:auto;min-width:0;min-height:32px;font-size:12px;padding:5px 7px;white-space:nowrap}.auto-move,.dock-idle{font-size:12px;line-height:15px}
+  .hand-footer{padding:0 6px;line-height:18px;font-size:10px;gap:6px;flex-wrap:nowrap;min-width:0}.hand-footer span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#your-role{font-size:9px}
+  .welcome{height:100%;margin:0 auto;padding:10px 16px;display:flex;flex-direction:column;justify-content:center;gap:12px;max-width:420px;min-height:0}.intro{align-self:stretch}.intro .eyebrow{font-size:9px}.intro h1{font-size:34px;line-height:1;margin:6px 0;letter-spacing:-1px}.intro h1 br{display:none}.intro>p,.intro .sample-cards,.intro .edition{display:none}
+  .lobby-form{width:100%;padding:16px}.lobby-form h2{font-size:24px;margin:6px 0 12px}.lobby-form label{font-size:13px;margin-bottom:4px}.lobby-form input{font-size:16px;padding:8px 10px;margin-bottom:10px}.lobby-form button{padding:8px 12px}.divider{margin:12px 0}.lobby-form .small{font-size:11px;margin-top:8px}.lobby-form>.eyebrow{font-size:10px}
+}
+@media(max-width:760px) and (max-height:500px){
+  body{grid-template-rows:36px minmax(0,1fr)}
+  .game{--player-height:128px;grid-template-rows:26px 30px minmax(0,1fr) var(--player-height);gap:2px;padding-block:2px}
+  .role-tile>span{line-height:11px;font-size:8px}.role-tile strong{line-height:14px;font-size:11px}
+  .player-area{grid-template-rows:minmax(0,1fr) 24px 16px}.hand-zone{grid-template-columns:minmax(0,1fr) 180px;grid-template-rows:minmax(0,1fr)}.action-dock{align-self:center;min-height:50px}.dock-label{display:none}.action-dock .actions{flex-direction:column}.action-dock .actions button{width:100%;min-height:30px}
+  .felt{inset:54px 0 2px}.seat{top:0!important}.battle{grid-template-columns:repeat(6,minmax(0,1fr));width:76%;gap:5px;padding-top:14px}.pair{width:min(9cqw,26cqh,55px)}.stock{bottom:15%}.stock .card{width:28px}.table-status{font-size:8px;line-height:10px;top:2px}.seat-state{display:none}
+  .welcome{max-width:700px;display:grid;grid-template-columns:1fr 1.3fr;gap:20px;padding:8px 20px}.lobby-form{padding:10px 14px}.lobby-form>.eyebrow,.lobby-form h2,.lobby-form .small{display:none}.lobby-form input{padding:4px 8px;margin-bottom:6px}.lobby-form button{padding:4px 8px}.divider{margin:6px 0}
+}
