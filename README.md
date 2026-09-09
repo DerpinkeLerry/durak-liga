@@ -2,6 +2,10 @@
 
 A small, dependency-free multiplayer Durak game for 2–4 friends. A first-person table view puts your cards in the foreground and other players around the felt. Create a lobby, share its six-character code, and let the host deal.
 
+## Opaque cards and legal hover only
+
+Disabled hand cards remain fully opaque. Only playable, enabled cards lift and move to the front on desktop hover or keyboard focus. This fix only requires replacing `public/style.css` and refreshing the browser.
+
 ## Fanned hands and touch layout
 
 Desktop cards now overlap by roughly half their width (more for very large hands) with a slight fan angle. Hovering or keyboard-focusing a playable card lifts it above its neighbours.
