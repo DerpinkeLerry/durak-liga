@@ -2,6 +2,12 @@
 
 A small, dependency-free multiplayer Durak game for 2–4 friends. A first-person table view puts your cards in the foreground and other players around the felt. Create a lobby, share its six-character code, and let the host deal.
 
+## Larger hand and trump card
+
+The action-message strip and turn-instruction panel below the table are removed from the visible layout. Their reserved space now enlarges the hand cards; desktop remains within the viewport. Roles above the table and the right-hand action dock still identify the current player and available actions. The face-up trump card is larger and tilted, with its deck count kept upright.
+
+This change updates `public/index.html`, `public/style.css`, and `public/app.js`. Replace all three frontend files together, then refresh the browser.
+
 ## Automatic moves, action dock, and leaving
 
 The server automatically passes when the current attacker has no legal matching card, and automatically takes when the defender cannot beat the attack. A 950ms pause shows the forced action before it resolves; no browser action is required. A player who has a legal card always retains their choice.

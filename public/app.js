@@ -142,7 +142,7 @@ function renderRoles(s,me){
 }
 function animateMove(m){
   if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
-  const banner=$('live-action');banner.animate([{opacity:.35,transform:'translateY(5px)'},{opacity:1,transform:'translateY(0)'}],{duration:260});
+  const banner=$('live-action');if(!banner.hidden)banner.animate([{opacity:.35,transform:'translateY(5px)'},{opacity:1,transform:'translateY(0)'}],{duration:260});
   const origin=m.player===state.you?$('hand'):Array.from(document.querySelectorAll('.seat')).find(el=>el.dataset.player===m.player);
   if(origin)origin.animate([{filter:'brightness(1)'},{filter:'brightness(1.5)'},{filter:'brightness(1)'}],{duration:500});
   if(m.outcome||m.kind==='defense'||m.automatic)impactEffect(m);
