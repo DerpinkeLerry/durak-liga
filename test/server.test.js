@@ -18,8 +18,9 @@ test('two real HTTP clients join, receive private streams, play, and reconnect',
     assert.equal((await api('play',{card:active.legal[0]},defender.token)).status,400);
     assert.equal((await api('play',{card:active.legal[0]},attacker.token)).status,200);
     const after=(await api('state',{},defender.token)).state;assert.equal(after.table.length,1);assert.equal(after.actor,after.you);
+    assert.equal(after.lastMove.kind,'attack');assert.equal(after.lastMove.card,active.legal[0]);assert.equal(after.lastMove.player,active.you);assert.equal(after.lastMove.target,after.you);assert.equal(after.lastMove.id,active.lastMove.id+1);
     sa.controller.abort();await new Promise(r=>setTimeout(r,20));
-    const reconnect=await stream(a.token);const resumed=await reconnect.next();assert.equal(resumed.you,first.you);assert.equal(resumed.table.length,1);
+    const reconnect=await stream(a.token);const resumed=await reconnect.next();assert.equal(resumed.you,first.you);assert.equal(resumed.table.length,1);assert.deepEqual(resumed.lastMove,after.lastMove);
     assert.equal((await api('join',{name:'Late',code:first.code})).status,400);
     assert.equal((await api('state',{},'fake')).status,401);
   } finally {controllers.forEach(c=>c.abort());server.closeAllConnections();await new Promise(r=>server.close(r));}

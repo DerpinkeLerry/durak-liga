@@ -105,5 +105,5 @@ export function snapshot(room,id) {
     discardCount:room.discard?.length??0,table:room.table??[],attacker:room.players[room.attacker]?.id,
     defender:room.players[room.defender]?.id,actor:room.players[room.actor]?.id,
     stage:room.stage,taking:room.taking,limit:room.limit,round:room.round,notice:room.notice,
-    loser:room.loser,legal:legalCards(room,id)};
+    lastMove:room.lastMove,loser:room.loser,legal:legalCards(room,id)};
 }

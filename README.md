@@ -2,6 +2,14 @@
 
 A small, dependency-free multiplayer Durak game for 2–4 friends. A first-person table view puts your cards in the foreground and other players around the felt. Create a lobby, share its six-character code, and let the host deal.
 
+## Interface update
+
+The table is wider and deeper, with larger battle cards on desktop. A round summary names the lead attacker, defender, and current player. Seat badges distinguish roles from whose turn it is; your own turn panel is highlighted too. Gold indicates attack and blue indicates defence, always accompanied by text.
+
+Every accepted move includes a public action announcement. Played cards fly from the player's seat to the table, with a stronger defence landing. Even a final defence that immediately clears the table is shown. Animations never delay the game and respect the device's reduced-motion preference.
+
+To update an existing deployment, replace `public/index.html`, `public/style.css`, `public/app.js`, `server.js`, and `game.js` together, then redeploy and refresh each player's browser. Server changes add public move metadata; gameplay rules are unchanged. Redeploying resets active in-memory lobbies, so update between games.
+
 ## Run locally
 
 Install Node.js 22 or newer, then from this folder:

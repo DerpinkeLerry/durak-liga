@@ -61,12 +61,21 @@ export const server=http.createServer(async(req,res)=>{
         if(room.status==='playing') throw Error('A game is already in progress.');
         if(room.players.some(p=>!p.streams.size)) throw Error('Wait for everyone to reconnect before dealing.');
         start(room);
+        room.lastMove={id:(room.lastMove?.id||0)+1,kind:"deal",player:p.id};
       } else if(action==='leave') {
         if(room.status==='playing') throw Error('Finish the game before leaving. Refresh to reconnect.');
         sessions.delete(p.token);room.players=room.players.filter(x=>x!==p);for(const s of p.streams)s.end();
         if(room.host===p.id) room.host=room.players[0]?.id;
         if(!room.players.length) rooms.delete(room.code);
-      } else act(room,p.id,action,data.card);
+      } else {
+        const round=room.round, target=room.players[room.defender]?.id;
+        const taking=room.taking||action==='take';
+        const kind=action==='play'?(room.stage==='defend'?'defense':'attack'):action;
+        act(room,p.id,action,data.card);
+        room.lastMove={id:(room.lastMove?.id||0)+1,kind,player:p.id,target,
+          ...(action==='play'?{card:data.card}:{}),
+          outcome:room.round!==round||room.status==='finished'?(taking?'taken':'defended'):null};
+      }
       broadcast(room);return json(res,200,{ok:true});
     }
     const files={'/':'index.html','/app.js':'app.js','/style.css':'style.css'};
