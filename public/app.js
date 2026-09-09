@@ -78,13 +78,14 @@ function render(){
       else{instruction=me.out?'You’re safe. Enjoy the show.':`Waiting for ${actor?.name||'your friend'} to ${s.stage==='defend'?'defend':'attack or pass'}.`;hint=s.taking?'The defender is taking. Attackers can still throw in.':'Your playable cards light up when it’s your turn.';}
       const offline=s.players.filter(p=>!p.online&&!p.out&&p.id!==s.you);
       if(!connected)hint='Connection lost. Reconnecting automatically…';else if(offline.length)hint=`Waiting for ${offline.map(p=>p.name).join(', ')} to reconnect.`;
-      $('instruction').textContent=instruction;$('hint').textContent=hint;
+      $('instruction').textContent=instruction;$('instruction').title=instruction;$('hint').textContent=hint;$('hint').title=hint;
       if(!s.table.length)$('waiting').append(elem('p','',`${s.players.find(p=>p.id===s.defender)?.name} defends this round`));
     }
     const hand=[...s.hand].sort((a,b)=>(a[0]===s.trump?10:Number(a[0]))-(b[0]===s.trump?10:Number(b[0]))||Number(a.slice(1))-Number(b.slice(1)));
     for(const c of hand){const el=cardNode(c,true);const legal=s.legal.includes(c)&&!busy&&connected;el.disabled=!legal;if(legal)el.classList.add('playable');el.onclick=()=>move('play',c);$('hand').append(el);}
   }
   $('your-role').textContent=s.status==='playing'?playerRole(me,s):'YOUR HAND';
+  requestAnimationFrame(fitHand);
   $('your-name').textContent=me.name+(s.host===s.you?' · Host':'');$('hand-count').textContent=`${s.hand.length} cards`;
 }
 $('copy-code').onclick=async()=>{try{await navigator.clipboard.writeText(state.code);notify('Lobby code copied. Send it to your friends.');}catch{notify('Your lobby code is '+state.code);}};
@@ -118,6 +119,7 @@ function renderRoles(s,me){
     }
   }
   $('live-action').textContent=moveText(s.lastMove);
+  $('live-action').title=moveText(s.lastMove);
   $('live-action').dataset.kind=s.lastMove?.kind||'deal';
   $('table-status').textContent=s.status==='playing'?(s.taking?'PICKING UP':s.stage==='defend'?'DEFENCE IN PROGRESS':'ATTACKERS TO PLAY')+` · ${s.table.length} / ${s.limit} attacks`:'';
   $('turn-bar').classList.toggle('your-turn',s.status==='playing'&&s.actor===s.you);
@@ -151,3 +153,13 @@ function animateMove(m){
     else {const fade=flying.animate([{opacity:1},{opacity:0,transform:'translateY(30px) scale(.8)'}],{duration:300,delay:180,fill:'forwards'});fade.finished.then(()=>flying.remove());}
   });
 }
+
+// Overlap cards within the reserved hand area instead of growing or scrolling it.
+function fitHand(){
+  const hand=$('hand'),cards=hand.querySelectorAll('.card');
+  if(!matchMedia('(min-width:761px)').matches||cards.length<2){hand.style.removeProperty('--hand-overlap');return;}
+  const available=hand.clientWidth-24, width=cards[0].getBoundingClientRect().width;
+  const overlap=Math.min(0,(available-width*cards.length)/(cards.length-1));
+  hand.style.setProperty('--hand-overlap',overlap+'px');
+}
+new ResizeObserver(fitHand).observe($('hand'));

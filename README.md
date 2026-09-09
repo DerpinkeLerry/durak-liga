@@ -2,6 +2,12 @@
 
 A small, dependency-free multiplayer Durak game for 2–4 friends. A first-person table view puts your cards in the foreground and other players around the felt. Create a lobby, share its six-character code, and let the host deal.
 
+## Desktop viewport layout
+
+Desktop widths above 760px use a fixed viewport-height layout. The header, role summary, action message, controls and hand have reserved areas; the table fills the remaining space. Lower desktop windows switch to a more compact layout. The decorative footer is hidden on desktop. Long action messages and turn hints use ellipsis with the full text available on hover. Large hands overlap automatically inside their area instead of creating a page scrollbar; hovering or focusing a playable card raises it above its neighbours. Mobile retains its separate layout, and the rules dialog can scroll internally.
+
+This update changes only `public/style.css`, `public/app.js`, and this README. Replace both frontend files together and refresh the browser. The desktop layout has been checked in source and JavaScript syntax checked; it has not been visually verified in a browser.
+
 ## Interface update
 
 The table is wider and deeper, with larger battle cards on desktop. A round summary names the lead attacker, defender, and current player. Seat badges distinguish roles from whose turn it is; your own turn panel is highlighted too. Gold indicates attack and blue indicates defence, always accompanied by text.

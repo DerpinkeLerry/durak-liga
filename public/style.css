@@ -7,3 +7,71 @@
 @media(max-width:760px){.role-strip{gap:6px;margin:12px 1% 0}.role-tile{padding:8px}.role-tile>span{font-size:10px;letter-spacing:.6px}.role-tile strong{font-size:14px}.live-action{font-size:13px;min-height:57px;margin:8px 1% 0;padding:8px 10px}.arena{height:465px;margin-top:14px}.felt{inset:128px 0 0;border-width:7px;border-radius:34% 34% 25% 25%}.seat{min-width:95px}.seat.pos-1,.seat.pos-2{top:55px}.seat.pos-1{left:17%}.seat.pos-2{left:83%}.seat-name{font-size:13px;max-width:110px}.role-badge{font-size:10px;padding:3px 5px;max-width:110px;letter-spacing:0}.seat-state{font-size:11px}.table-status{top:51px;left:18%;right:18%;font-size:10px;letter-spacing:.5px}.battle{width:66%;gap:8px;padding-top:50px;min-height:180px}.pair{width:62px;height:89px;margin-top:22px}.pair .card{width:48px;height:67px}.pair .card span{font-size:14px}.pair .card b{font-size:25px}.pair .defense{left:12px;top:18px}.pair-label{font-size:8px;letter-spacing:.6px;top:-17px}.stock{left:3%;bottom:55px}.discard{bottom:55px}.turn-bar{padding:12px 10px;gap:8px}.turn-bar h2{font-size:21px}.turn-bar .actions{max-width:110px}.turn-bar .actions button{white-space:normal}.hand-footer{gap:10px;flex-wrap:wrap}#your-role{font-size:11px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 .waiting{position:absolute;inset:75px 12% 25px;max-width:none;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}.waiting:empty{display:none}.table-status{top:65px}@media(max-width:760px){.table-status{top:51px}.waiting{inset:80px 10% 20px}}
+/* Desktop is a viewport-sized game surface, not a scrolling document. */
+@media (min-width:761px){
+  html{height:100%;overflow:hidden}
+  body{height:100dvh;min-height:0;overflow:hidden;display:grid;grid-template-rows:56px minmax(0,1fr)}
+  header{height:auto;min-height:0;padding:0 24px}
+  .brand{font-size:24px}.brand span{font-size:9px;margin-top:2px}
+  main{min-height:0;min-width:0;overflow:hidden}
+  .site-footer{display:none}
+  .game{--player-height:clamp(142px,25dvh,204px);position:relative;display:grid;grid-template-rows:34px 46px minmax(0,1fr) var(--player-height);gap:6px;width:100%;height:100%;min-height:0;max-width:1600px;margin:0 auto;padding:8px 24px}
+  .game-top{grid-row:1;min-width:0;gap:12px}.game-top .eyebrow{font-size:10px}.code-button{font-size:15px;padding:3px 10px}
+  .role-strip{grid-row:2;margin:0;gap:10px;min-height:0}
+  .role-tile{padding:3px 12px;overflow:hidden}
+  .role-tile>span{font-size:10px;line-height:16px}
+  .role-tile strong{display:block;font-size:14px;line-height:20px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .game:has(.role-strip[hidden]){grid-template-rows:34px 0 minmax(0,1fr) var(--player-height)}
+  .arena{grid-row:3;container-type:size;height:auto;min-height:0;min-width:0;margin:0;padding:0}
+  .felt{inset:65px 0 36px;border-width:8px;border-radius:40% 40% 30% 30%;box-shadow:0 8px 20px #0006,inset 0 0 0 2px #b4a67945,inset 0 0 60px #082b28}
+  .seat{display:grid;grid-template-columns:42px minmax(0,1fr);grid-template-rows:20px 23px 18px;column-gap:8px;min-width:0;width:clamp(160px,20vw,240px);text-align:left}
+  .seat.pos-0,.seat.pos-1,.seat.pos-2{top:2px}.seat.pos-1{left:18%}.seat.pos-2{left:82%}
+  .seat .avatar{grid-column:1;grid-row:1/4;width:40px;height:40px;font-size:25px;margin:auto 0}
+  .seat-name{grid-column:2;grid-row:1;font-size:14px;line-height:20px;max-width:none;min-width:0;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .role-badge{grid-column:2;grid-row:2;font-size:10px;line-height:17px;margin:1px 0;padding:0 5px;max-width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+  .seat-state{grid-column:2;grid-row:3;font-size:11px;line-height:18px;white-space:nowrap}
+  .mini-hand{display:none}
+  .table-status{top:8px;left:18%;right:18%;font-size:10px;line-height:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .battle{width:78%;min-height:0;max-height:100%;padding:22px 0 0;gap:8px;flex-wrap:nowrap;align-items:center}
+  .pair{flex:0 1 auto;width:min(10cqw,22cqh,108px);height:auto;aspect-ratio:108/143;margin:0;min-width:0}
+  .pair .card{width:75%;height:auto;aspect-ratio:5/7;border-radius:5px}
+  .pair .card span{font-size:clamp(12px,2.9cqh,20px);left:4px;top:3px}
+  .pair .card b{font-size:clamp(20px,5cqh,36px)}
+  .pair .defense{left:22%;top:21%}
+  .pair-label{top:-16px;font-size:9px;letter-spacing:.6px}
+  .stock{left:3%;bottom:22%;gap:3px}.stock .card{width:clamp(28px,9cqh,48px);height:auto;aspect-ratio:5/7}
+  .stock-label,.discard{font-size:11px}.discard{right:3%;bottom:30%}
+  .waiting{inset:28px 13% 8px;padding:6px}.waiting h2{font-size:clamp(20px,4cqh,32px);margin:0 0 8px}.waiting p{margin:0;font-size:14px;max-width:500px}
+  .table-mark{top:35%;font-size:30px}
+  .live-action{position:absolute;z-index:4;left:24px;right:24px;bottom:calc(var(--player-height) + 14px);height:30px;min-height:0;margin:0;padding:4px 10px;font-size:13px;line-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .player-area{grid-row:4;min-height:0;min-width:0;margin:0;display:grid;grid-template-rows:54px minmax(0,1fr) 20px}
+  .turn-bar{min-height:0;padding:4px 12px;gap:12px;border-radius:7px;align-items:center}
+  .turn-bar>div:first-child{min-width:0;display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:12px;align-items:baseline}
+  .turn-bar .eyebrow{font-size:10px;white-space:nowrap}
+  .turn-bar h2{font-size:20px;line-height:23px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .turn-bar p{grid-column:1/-1;font-size:12px;line-height:17px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:none}
+  .actions button{padding:7px 14px;font-size:14px}
+  .hand{position:relative;min-height:0;min-width:0;overflow:hidden;padding:10px 12px 4px;gap:0;justify-content:center;align-items:center}
+  .hand .card{width:auto;height:100%;max-height:124px;aspect-ratio:5/7;flex:0 0 auto;margin-left:var(--hand-overlap,0px);transform-origin:center bottom}
+  .hand .card:first-child{margin-left:0}
+  .hand .card span{font-size:clamp(13px,2.3dvh,20px);left:4px;top:3px}
+  .hand .card b{font-size:clamp(23px,4dvh,40px)}
+  .hand .card:hover,.hand .card:focus-visible{z-index:3}
+  .hand .card.playable:hover{transform:translateY(-5px)}
+  .hand-footer{min-height:0;padding:0 12px;font-size:11px;line-height:20px;gap:12px;flex-wrap:nowrap}
+  .hand-footer span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .welcome{height:100%;min-height:0;margin:0 auto;align-items:center;gap:clamp(24px,6vw,90px);padding:18px 24px;grid-template-columns:minmax(0,1fr) minmax(330px,420px)}
+  .intro h1{font-size:clamp(44px,10dvh,88px);margin:18px 0}.intro>p{font-size:16px;margin:12px 0}
+  .sample-cards{height:clamp(70px,22dvh,180px);margin-top:12px}.sample-cards .card{width:clamp(65px,13dvh,107px);height:auto;aspect-ratio:5/7}
+  .lobby-form{padding:clamp(16px,3dvh,30px)}.lobby-form h2{font-size:28px;margin:10px 0 18px}.lobby-form input{padding:9px 12px;margin-bottom:12px}.lobby-form button{padding:10px 14px}.divider{margin:16px 0}
+}
+@media(min-width:761px) and (max-height:650px){
+  body{grid-template-rows:44px minmax(0,1fr)}.brand span{display:none}
+  .game{--player-height:142px;grid-template-rows:30px 38px minmax(0,1fr) var(--player-height);gap:4px;padding:4px 18px}
+  .game:has(.role-strip[hidden]){grid-template-rows:30px 0 minmax(0,1fr) var(--player-height)}
+  .role-tile{padding:1px 10px}.role-tile strong{line-height:17px}.role-tile>span{line-height:15px}
+  .live-action{left:18px;right:18px;bottom:calc(var(--player-height) + 8px);height:25px;line-height:17px;font-size:12px}
+  .felt{inset:61px 0 29px}.player-area{grid-template-rows:50px minmax(0,1fr) 18px}.hand-footer{line-height:18px}
+  .turn-bar h2{font-size:18px}.intro .sample-cards,.intro .edition{display:none}
+  .lobby-form{padding:14px 22px}.lobby-form h2{font-size:24px;margin:5px 0 10px}.lobby-form label{margin-bottom:4px}.lobby-form input{padding:6px 10px;margin-bottom:8px}.lobby-form button{padding:7px 12px}.divider{margin:9px 0}.lobby-form .small{margin-top:8px}
+}
