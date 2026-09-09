@@ -107,3 +107,52 @@ export function snapshot(room,id) {
     stage:room.stage,taking:room.taking,limit:room.limit,round:room.round,notice:room.notice,
     lastMove:room.lastMove,loser:room.loser,legal:legalCards(room,id)};
 }
+
+// Only forced decisions are automated; a playable card always remains a choice.
+export function forcedAction(room) {
+  if(room.status!=='playing')return null;
+  const p=room.players[room.actor];
+  if(!p||legalCards(room,p.id).length)return null;
+  return room.stage==='defend'?'take':room.table.length?'pass':null;
+}
+
+export function leave(room,id) {
+  const old=room.players.slice(), index=old.findIndex(p=>p.id===id);
+  if(index<0)fail('You are not seated here.');
+  const departing=old[index], wasPlaying=room.status==='playing';
+  const attacker=old[room.attacker]?.id,defender=old[room.defender]?.id,actor=old[room.actor]?.id;
+  const order=(room.order||[]).map(i=>old[i].id);
+  const pending=order.slice(room.priority||0).filter(x=>x!==id);
+  const clockwise=Array.from({length:old.length-1},(_,n)=>old[(index+n+1)%old.length].id);
+  room.discard??=[];room.discard.push(...departing.hand);departing.hand=[];
+  room.players=old.filter(p=>p.id!==id);
+  if(room.host===id)room.host=room.players[0]?.id;
+  const locate=id=>room.players.findIndex(p=>p.id===id);
+  if(!wasPlaying || room.players.length<2){
+    if(wasPlaying || room.status==='waiting' || room.players.length<2){
+      Object.assign(room,{status:'waiting',table:[],deck:[],discard:[],attacker:undefined,defender:undefined,actor:undefined,order:[],trump:undefined,trumpCard:undefined,lastMove:room.lastMove});
+      room.players.forEach(p=>{p.hand=[];p.out=false;});
+    }
+    return;
+  }
+  room.order=order.filter(x=>x!==id).map(locate);
+  if(defender===id){
+    // House rule: a departing defender cancels the bout. Exposed cards leave play.
+    room.discard.push(...room.table.flatMap(p=>p.defense?[p.attack,p.defense]:[p.attack]));room.table=[];
+    for(const i of room.order)while(room.players[i].hand.length<6&&room.deck.length)room.players[i].hand.push(room.deck.pop());
+    if(!room.deck.length)room.players.forEach(p=>{p.out=!p.hand.length;});
+    const remaining=room.players.filter(p=>!p.out);
+    if(remaining.length<2){room.status='finished';room.loser=remaining[0]?.id??null;room.notice=remaining.length?`${remaining[0].name} is the Durak!`:'A draw — everyone is out!';return;}
+    begin(room,locate(clockwise.find(x=>!room.players[locate(x)].out)));
+  }else{
+    room.defender=locate(defender);
+    room.attacker=attacker===id?room.order[0]:locate(attacker);
+    if(room.stage==='defend')room.actor=room.defender;
+    else {
+      const nextId=actor===id?pending[0]:actor;
+      room.actor=nextId===undefined?undefined:locate(nextId);
+      room.priority=room.order.indexOf(room.actor);
+    }
+    if(!room.order.length||room.actor===undefined)finishBout(room);
+  }
+}

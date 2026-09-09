@@ -2,11 +2,31 @@ import http from 'node:http';
 import {readFile} from 'node:fs/promises';
 import {randomBytes,randomUUID} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
-import {start,act,snapshot} from './game.js';
+import {start,act,snapshot,forcedAction,leave} from './game.js';
 const rooms=new Map(), sessions=new Map(), rates=new Map();
 const root=fileURLToPath(new URL('./public/',import.meta.url));
 function json(res,status,data) {res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify(data));}
 function broadcast(room) {room.updated=Date.now();for(const p of room.players) for(const stream of p.streams) stream.write(`data: ${JSON.stringify(snapshot(room,p.id))}\n\n`);}
+function performMove(room,p,action,card,automatic=false){
+  const round=room.round,target=room.players[room.defender]?.id;
+  const taking=room.taking||action==='take';
+  const kind=action==='play'?(room.stage==='defend'?'defense':'attack'):action;
+  act(room,p.id,action,card);
+  room.lastMove={id:(room.lastMove?.id||0)+1,kind,player:p.id,target,automatic,
+    ...(action==='play'?{card}:{}),
+    outcome:room.round!==round||room.status==='finished'?(taking?'taken':'defended'):null};
+}
+function scheduleForced(room){
+  clearTimeout(room.autoTimer);room.autoTimer=null;
+  if(!forcedAction(room))return;
+  room.autoTimer=setTimeout(()=>{
+    room.autoTimer=null;
+    const action=forcedAction(room),p=room.players[room.actor];
+    if(!action||!p)return;
+    performMove(room,p,action,undefined,true);broadcast(room);scheduleForced(room);
+  },950);
+  room.autoTimer.unref();
+}
 function player(name) {
   if(typeof name!=='string' || !name.trim() || name.trim().length>20) throw Error('Use a name between 1 and 20 characters.');
   return {id:randomUUID(),token:randomBytes(32).toString('hex'),name:name.trim(),hand:[],streams:new Set()};
@@ -63,19 +83,13 @@ export const server=http.createServer(async(req,res)=>{
         start(room);
         room.lastMove={id:(room.lastMove?.id||0)+1,kind:"deal",player:p.id};
       } else if(action==='leave') {
-        if(room.status==='playing') throw Error('Finish the game before leaving. Refresh to reconnect.');
-        sessions.delete(p.token);room.players=room.players.filter(x=>x!==p);for(const s of p.streams)s.end();
-        if(room.host===p.id) room.host=room.players[0]?.id;
-        if(!room.players.length) rooms.delete(room.code);
-      } else {
-        const round=room.round, target=room.players[room.defender]?.id;
-        const taking=room.taking||action==='take';
-        const kind=action==='play'?(room.stage==='defend'?'defense':'attack'):action;
-        act(room,p.id,action,data.card);
-        room.lastMove={id:(room.lastMove?.id||0)+1,kind,player:p.id,target,
-          ...(action==='play'?{card:data.card}:{}),
-          outcome:room.round!==round||room.status==='finished'?(taking?'taken':'defended'):null};
-      }
+        clearTimeout(room.autoTimer);
+        leave(room,p.id);
+        room.lastMove={id:(room.lastMove?.id||0)+1,kind:'leave',player:p.id,name:p.name};
+        sessions.delete(p.token);for(const s of p.streams)s.end();
+        if(!room.players.length)rooms.delete(room.code);
+      } else performMove(room,p,action,data.card);
+      scheduleForced(room);
       broadcast(room);return json(res,200,{ok:true});
     }
     const files={'/':'index.html','/app.js':'app.js','/style.css':'style.css'};

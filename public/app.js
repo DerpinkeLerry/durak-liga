@@ -30,7 +30,7 @@ function cardNode(card,button=false){
   const symbol=document.createElement('b');symbol.textContent=suits[s];symbol.setAttribute('aria-hidden','true');el.append(corner,symbol);return el;
 }
 function elem(tag,className,text){const el=document.createElement(tag);el.className=className;if(text!==undefined)el.textContent=text;return el;}
-function actionButton(label,action,primary=true){const el=elem('button',primary?'primary':'secondary',label);el.disabled=busy||!connected;el.onclick=()=>move(action);return el;}
+function actionButton(label,action,primary=true){const el=elem('button',primary?'primary':'secondary',label);el.dataset.action=action;el.disabled=busy||!connected;el.onclick=()=>move(action);return el;}
 async function move(action,card){if(busy||!connected)return;busy=true;render();try{await api(action,{card});}catch(e){notify(e.message);}finally{busy=false;if(state)render();}}
 $('lobby-form').onsubmit=async e=>{
   e.preventDefault();if(busy)return;const action=e.submitter?.value||'create';const name=$('name').value.trim(),code=$('code').value.trim();
@@ -42,7 +42,7 @@ $('lobby-form').onsubmit=async e=>{
 function render(){
   if(!state)return;const s=state,me=s.players.find(p=>p.id===s.you),myTurn=s.actor===s.you,actor=s.players.find(p=>p.id===s.actor);
   $('welcome').hidden=true;$('game').hidden=false;$('copy-code').textContent=s.code+' ⧉';$('round-label').textContent=s.status==='waiting'?'2–4 players':`Round ${s.round} · Trump ${suits[Number(s.trump)]}`;
-  $('leave').hidden=s.status==='playing';
+  $('leave').hidden=false;$('leave').disabled=busy;
   renderRoles(s,me);
   const myIndex=s.players.findIndex(p=>p.id===s.you);const others=Array.from({length:s.players.length-1},(_,i)=>s.players[(myIndex+i+1)%s.players.length]);
   $('opponents').replaceChildren();
@@ -76,6 +76,10 @@ function render(){
       if(myTurn&&s.stage==='defend'){instruction='You are defending.';hint='Play a highlighted card, or take the table.';$('actions').append(actionButton('Take cards','take',false));}
       else if(myTurn){instruction=s.taking?'One last throw-in?':s.table.length?'Your turn to add an attack.':'You attack first.';hint=s.table.length?'Match a rank on the table, or pass.':'Play any card to begin the attack.';if(s.table.length)$('actions').append(actionButton('Pass','pass'));}
       else{instruction=me.out?'You’re safe. Enjoy the show.':`Waiting for ${actor?.name||'your friend'} to ${s.stage==='defend'?'defend':'attack or pass'}.`;hint=s.taking?'The defender is taking. Attackers can still throw in.':'Your playable cards light up when it’s your turn.';}
+      if(myTurn&&!s.legal.length){
+        $('actions').replaceChildren(elem('span','auto-move',s.stage==='defend'?'Taking automatically…':'Passing automatically…'));
+        hint=s.stage==='defend'?'No card can beat this attack. The table is being picked up.':'No matching rank. Your turn passes automatically.';
+      }
       const offline=s.players.filter(p=>!p.online&&!p.out&&p.id!==s.you);
       if(!connected)hint='Connection lost. Reconnecting automatically…';else if(offline.length)hint=`Waiting for ${offline.map(p=>p.name).join(', ')} to reconnect.`;
       $('instruction').textContent=instruction;$('instruction').title=instruction;$('hint').textContent=hint;$('hint').title=hint;
@@ -85,11 +89,20 @@ function render(){
     for(const c of hand){const el=cardNode(c,true);const legal=s.legal.includes(c)&&!busy&&connected;el.disabled=!legal;if(legal)el.classList.add('playable');el.onclick=()=>move('play',c);$('hand').append(el);}
   }
   $('your-role').textContent=s.status==='playing'?playerRole(me,s):'YOUR HAND';
+  const dock=document.querySelector('.action-dock');
+  dock.classList.toggle('dock-active',myTurn&&s.status==='playing');
+  dock.classList.toggle('dock-defense',s.stage==='defend');
+  if(!$('actions').childElementCount)$('actions').append(elem('span','dock-idle',s.status==='waiting'?'Waiting for the host':s.status==='finished'?'Waiting for a rematch':myTurn?'Choose a card':'Waiting for your turn'));
   requestAnimationFrame(fitHand);
   $('your-name').textContent=me.name+(s.host===s.you?' · Host':'');$('hand-count').textContent=`${s.hand.length} cards`;
 }
 $('copy-code').onclick=async()=>{try{await navigator.clipboard.writeText(state.code);notify('Lobby code copied. Send it to your friends.');}catch{notify('Your lobby code is '+state.code);}};
-$('leave').onclick=async()=>{try{await api('leave');clearSession();}catch(e){notify(e.message);}};
+$('leave').onclick=async()=>{
+  if(busy)return;busy=true;stream?.close();$('leave').disabled=true;
+  try{await api('leave');clearSession();notify('You left the table.');}
+  catch(e){notify(e.message);if(token)connect();}
+  finally{busy=false;if(state)render();}
+};
 $('rules-button').onclick=()=>$('rules').showModal();$('close-rules').onclick=()=>$('rules').close();
 $('rules').addEventListener('click',e=>{if(e.target===$('rules')){const r=$('rules').getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)$('rules').close();}});
 if(token)api('state').then(r=>{state=r.state;connect();render();}).catch(e=>notify(e.message));
@@ -105,9 +118,11 @@ function playerRole(p,s){
 function displayName(id){const p=state.players.find(p=>p.id===id);return p?.name||'A player';}
 function moveText(m){
   if(!m)return 'The table is ready. Share the code to invite your friends.';
+  if(m.kind==='leave')return `${m.name||'A player'} left the table. ${state.status==='waiting'?'Waiting for another player.':state.status==='finished'?'The game is over.':'The game continues.'}`;
   const who=displayName(m.player),target=displayName(m.target);
   const face=m.card?(({11:'J',12:'Q',13:'K',14:'A'})[Number(m.card.slice(1))]||m.card.slice(1))+suits[Number(m.card[0])]:'';
   let text=m.kind==='deal'?`${who} dealt a new game.`:m.kind==='attack'?`${who} attacked ${target} with ${face}.`:m.kind==='defense'?`${who} defended with ${face}.`:m.kind==='take'?`${who} chose to take the table.`:`${who} passed the attack.`;
+  if(m.automatic)text=m.kind==='take'?`${who} cannot defend — taking automatically.`:`${who} has no matching card — automatic pass.`;
   if(m.outcome)text+=m.outcome==='taken'?` ${target} picks up the cards.`:` ${target} beat the attack. Table cleared!`;
   return text;
 }
@@ -130,6 +145,7 @@ function animateMove(m){
   const banner=$('live-action');banner.animate([{opacity:.35,transform:'translateY(5px)'},{opacity:1,transform:'translateY(0)'}],{duration:260});
   const origin=m.player===state.you?$('hand'):Array.from(document.querySelectorAll('.seat')).find(el=>el.dataset.player===m.player);
   if(origin)origin.animate([{filter:'brightness(1)'},{filter:'brightness(1.5)'},{filter:'brightness(1)'}],{duration:500});
+  if(m.outcome||m.kind==='defense'||m.automatic)impactEffect(m);
   if(!m.card)return;
   const target=Array.from($('battle').querySelectorAll('.card')).find(el=>el.dataset.card===m.card);
   const sourceRect=(origin||$('hand')).getBoundingClientRect();
@@ -163,3 +179,19 @@ function fitHand(){
   hand.style.setProperty('--hand-overlap',overlap+'px');
 }
 new ResizeObserver(fitHand).observe($('hand'));
+
+function impactEffect(move){
+  const rect=document.querySelector('.felt').getBoundingClientRect();
+  const color=move.kind==='defense'||move.outcome==='defended'?'#8ed6eb':'#e9bd71';
+  const x=rect.left+rect.width/2,y=rect.top+rect.height/2;
+  const wave=elem('div','impact-wave');wave.setAttribute('aria-hidden','true');
+  Object.assign(wave.style,{left:x+'px',top:y+'px',borderColor:color});document.body.append(wave);
+  const delay=move.card?360:0;
+  wave.animate([{transform:'translate(-50%,-50%) scale(.2)',opacity:0},{offset:.15,opacity:.8},{transform:'translate(-50%,-50%) scale(2.4)',opacity:0}],{duration:700,delay,fill:'both'}).finished.then(()=>wave.remove());
+  if(move.kind==='defense')for(let i=0;i<8;i++){
+    const spark=elem('i','impact-spark');spark.setAttribute('aria-hidden','true');
+    Object.assign(spark.style,{left:x+'px',top:y+'px',background:color});document.body.append(spark);
+    const a=i*Math.PI/4,dx=Math.cos(a)*80,dy=Math.sin(a)*50;
+    spark.animate([{transform:'translate(0,0) scale(0)',opacity:0},{offset:.15,opacity:1},{transform:`translate(${dx}px,${dy}px) scale(.2)`,opacity:0}],{duration:600,delay,fill:'both'}).finished.then(()=>spark.remove());
+  }
+}

@@ -2,6 +2,16 @@
 
 A small, dependency-free multiplayer Durak game for 2–4 friends. A first-person table view puts your cards in the foreground and other players around the felt. Create a lobby, share its six-character code, and let the host deal.
 
+## Automatic moves, action dock, and leaving
+
+The server automatically passes when the current attacker has no legal matching card, and automatically takes when the defender cannot beat the attack. A 950ms pause shows the forced action before it resolves; no browser action is required. A player who has a legal card always retains their choice.
+
+Pass, Take, Deal and Rematch now occupy an action dock to the right of the hand, within the existing desktop height. Button glints, defence shockwaves and small particles supplement the seat-to-table card animations. Reduced-motion preferences disable these effects.
+
+The Leave table button works during play. Departing hands go to the discard pile. Attacker departures preserve the current table and advance priority if necessary. If the defender departs, the exposed table is discarded, remaining attackers refill in their existing order, and the next active clockwise seat starts a new bout. Normal endgame rules still apply. With fewer than two seated players, the match returns to a waiting lobby which accepts a new player. The host role transfers to the next seated player. A network interruption is not treated as leaving.
+
+Update the full project together and redeploy between games. The changes include server logic and all three frontend files; active in-memory games reset during deployment.
+
 ## Desktop viewport layout
 
 Desktop widths above 760px use a fixed viewport-height layout. The header, role summary, action message, controls and hand have reserved areas; the table fills the remaining space. Lower desktop windows switch to a more compact layout. The decorative footer is hidden on desktop. Long action messages and turn hints use ellipsis with the full text available on hover. Large hands overlap automatically inside their area instead of creating a page scrollbar; hovering or focusing a playable card raises it above its neighbours. Mobile retains its separate layout, and the rules dialog can scroll internally.
@@ -71,11 +81,11 @@ The server shuffles using `node:crypto`, validates every action and sends only t
 npm test
 ```
 
-Ten tests cover trump rules, illegal moves, initial deals, private state, attacker priority, pickup and discard behavior, refill order, endings, 36 complete simulated games across 2–4 players, and two-client HTTP/SSE play and reconnect. Browser visual testing has not been performed.
+Sixteen tests cover trump rules, illegal moves, initial deals, private state, attacker priority, pickup and discard behavior, refill order, endings, 36 complete simulated games across 2–4 players, two-client HTTP/SSE play and reconnect, forced server moves, departures in different roles, card conservation through 32 simulated games with departures, host transfer, and rejoining a waiting lobby. Browser visual testing has not been performed.
 
 ## Deliberate v1 limits
 
 - Lobby state is in memory. Restarts, redeploys, or Render instance recycling reset all games. Free Render services can spin down while idle and take time to wake. Use a single instance; multiple instances need shared state and coordination.
-- A disconnected player keeps their seat. Refresh in the same tab to reconnect. There are no bots, turn timers, forfeits, or host kicks yet, so an abandoned active game must be replaced with a new lobby in another tab.
+- A disconnected player keeps their seat. Refresh in the same tab to reconnect. There are no bots, general turn timeouts, or host kicks yet. Explicit Leave table releases a seat; a disconnected player with a legal move still needs to reconnect or leave.
 - Sessions use per-tab storage. A new tab or different device cannot reclaim an existing seat. Join before the host starts; there is no mid-game joining.
 - Empty disconnected lobbies expire after two hours. There are basic body, connection, request-rate, and room limits, but this is a friends-and-family MVP, not a hardened public gaming service.

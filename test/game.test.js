@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {start,act,beats,legalCards,snapshot} from '../game.js';
+import {start,act,beats,legalCards,snapshot,forcedAction,leave} from '../game.js';
 function room(n=2){return {code:'ABC123',players:Array.from({length:n},(_,i)=>({id:String(i),name:`Player ${i}`,hand:[],streams:new Set()}))};}
 function fixture(){const r=room();Object.assign(r,{status:'playing',deck:[],discard:[],trump:'3',trumpCard:'314',attacker:0,defender:1,actor:0,stage:'attack',table:[],order:[0],priority:0,limit:2,round:1,taking:false});r.players[0].hand=['06','16','010'];r.players[1].hand=['07','18'];return r;}
 test('trumps and same-suit higher cards beat correctly',()=>{assert.equal(beats('07','06','3'),true);assert.equal(beats('16','06','3'),false);assert.equal(beats('36','014','3'),true);assert.equal(beats('014','36','3'),false);assert.equal(beats('37','36','3'),true);});
@@ -20,6 +20,43 @@ test('complete 2–4 player games preserve all 36 cards and reach an ending',()=
       const all=[...r.deck,...r.discard,...r.players.flatMap(p=>p.hand),...r.table.flatMap(p=>p.defense?[p.attack,p.defense]:[p.attack])];
       assert.equal(all.length,36);assert.equal(new Set(all).size,36);
       if(r.status==='playing'){assert.ok(r.actor!==undefined);assert.ok(r.table.length<=r.limit);}
+    }
+    assert.equal(r.status,'finished');
+  }
+});
+
+test('forced actions only pass/take when there is no legal card',()=>{
+  const r=fixture();assert.equal(forcedAction(r),null);
+  r.players[0].hand=['06','010'];act(r,'0','play','06');assert.equal(forcedAction(r),null);
+  act(r,'1','play','07');assert.equal(forcedAction(r),'pass');
+  act(r,'0','pass');assert.equal(forcedAction(r),null);
+  const d=fixture();d.players[1].hand=['18','19'];act(d,'0','play','06');assert.equal(forcedAction(d),'take');
+});
+test('leaving attacker preserves live defense, discards their hand and transfers host',()=>{
+  const r=fixture();r.players.push({id:'2',name:'Third',hand:['26','28']});r.order=[0,2];r.host='0';
+  act(r,'0','play','06');leave(r,'0');
+  assert.equal(r.status,'playing');assert.equal(r.host,'1');assert.equal(r.players[r.actor].id,'1');
+  assert.deepEqual(r.table,[{attack:'06',defense:null}]);assert.ok(r.discard.includes('010'));
+  act(r,'1','play','07');assert.equal(r.players[r.actor].id,'2');
+});
+test('departing defender clears the bout and starts with next surviving seat',()=>{
+  const r=fixture();r.players.push({id:'2',name:'Third',hand:['26','28']});r.order=[0,2];
+  act(r,'0','play','06');leave(r,'1');assert.equal(r.status,'playing');assert.equal(r.players[r.attacker].id,'2');
+  assert.equal(r.table.length,0);assert.ok(r.discard.includes('06'));assert.ok(r.discard.includes('07'));
+});
+test('one remaining player returns to an open waiting lobby',()=>{
+  const r=fixture();r.host='0';leave(r,'0');assert.equal(r.status,'waiting');assert.equal(r.host,'1');assert.deepEqual(r.players[0].hand,[]);
+  assert.equal(forcedAction(r),null);
+});
+test('departures in different roles preserve all cards and allow games to finish',()=>{
+  for(let trial=0;trial<32;trial++){
+    const r=room(4);r.host='0';start(r);let step=0;
+    while(r.status==='playing'&&step++<12000){
+      if(step===5||step===10){const idx=trial%4===0?r.defender:trial%4===1?r.attacker:trial%4===2?r.actor:r.players.length-1;leave(r,r.players[idx].id);}
+      else{const id=r.players[r.actor].id,legal=legalCards(r,id);act(r,id,legal.length?'play':r.stage==='defend'?'take':'pass',legal[0]);}
+      const cards=[...r.deck,...r.discard,...r.players.flatMap(p=>p.hand),...r.table.flatMap(p=>p.defense?[p.attack,p.defense]:[p.attack])];
+      assert.equal(cards.length,36);assert.equal(new Set(cards).size,36);
+      if(r.status==='playing'){assert.ok(r.players[r.actor]);assert.ok(r.players[r.defender]);}
     }
     assert.equal(r.status,'finished');
   }
